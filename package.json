@@ -1,0 +1,53 @@
+{
+  "sideEffects": false,
+  "name": "@aminnairi/react-form",
+  "types": "dist/index.d.ts",
+  "description": "Form utilities for React written in TypeScript",
+  "version": "0.1.0",
+  "homepage": "https://github.com/aminnairi/react-form",
+  "license": "MIT",
+  "module": "dist/index.module.js",
+  "main": "dist/index.common.js",
+  "browser": "dist/index.browser.js",
+  "bugs": {
+    "url": "https://github.com/aminnairi/react-form/issues"
+  },
+  "author": {
+    "name": "Amin NAIRI",
+    "url": "https://github.com/aminnairi"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aminnairi/react-form.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "react",
+    "form",
+    "input",
+    "textarea",
+    "checkbox",
+    "radio",
+    "select",
+    "validation",
+    "error",
+    "hook"
+  ],
+  "scripts": {
+    "build": "rollup --config rollup.config.ts --configPlugin esbuild",
+    "types": "tsc --project tsconfig.json --declaration --emitDeclarationOnly"
+  },
+  "peerDependencies": {
+    "react": "18.2.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-terser": "0.4.3",
+    "@types/react": "18.2.14",
+    "rollup": "3.25.3",
+    "rollup-plugin-delete": "2.0.0",
+    "rollup-plugin-esbuild": "5.0.0",
+    "typescript": "5.1.5"
+  }
+}
