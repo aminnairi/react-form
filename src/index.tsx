@@ -1,37 +1,32 @@
-import React, { FormEvent, useCallback } from "react";
+import React from "react";
 import { useForm } from ".";
 
-interface CountryFormFields {
-  country: string;
-}
-
 export const App = () => {
-  const {
-    fields,
-    onSelectChangeForField,
-  } = useForm<CountryFormFields>({
-    country: ""
+  const { fields, change } = useForm({
+    fields: {
+      email: "",
+      password: ""
+    },
+    transformations: {
+      email: value => {
+        return value.trim().toLowerCase();
+      }
+    }
   });
 
-  const onSubmit = useCallback((event: FormEvent) => {
-    event.preventDefault();
-
-    console.log("TODO: handle fields");
-    console.log({ fields });
-  }, [fields]);
-
   return (
-    <form onSubmit={onSubmit}>
-      <select
-        value={fields.country}
-        onChange={onSelectChangeForField("country")}>
-        <option value="fr">France</option>
-        <option value="us">USA</option>
-        <option value="de">Germany</option>
-      </select>
+    <form>
+      <input
+        type="email"
+        value={fields.email}
+        onChange={change("email")} />
+      <input
+        type="password"
+        value={fields.password}
+        onChange={change("password")} />
       <button type="submit">
         Login
       </button>
     </form>
   );
-};
+}
