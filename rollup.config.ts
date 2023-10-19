@@ -2,6 +2,7 @@ import { defineConfig } from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import terser from "@rollup/plugin-terser";
 import remove from "rollup-plugin-delete";
+import nodeResolve from "@rollup/plugin-node-resolve";
 
 export default defineConfig({
   input: "src/index.ts",
@@ -10,7 +11,8 @@ export default defineConfig({
       targets: "dist"
     }),
     esbuild(),
-    terser()
+    terser(),
+    nodeResolve()
   ],
   external: [
     "react"
