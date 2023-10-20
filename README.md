@@ -468,14 +468,22 @@ export const App = () => {
 
 See [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
+[Go back to summary](#summary)
+
 ## License
 
 See [`LICENSE`](./LICENSE).
+
+[Go back to summary](#summary)
 
 ## Code Of Conduct
 
 See [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md).
 
+[Go back to summary](#summary)
+
 ## Security
 
 See [`SECURITY.md`](./SECURITY.md).
+
+[Go back to summary](#summary)
