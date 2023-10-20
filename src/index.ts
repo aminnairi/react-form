@@ -9,7 +9,7 @@ export type Transformations<Fields extends object> = {
   readonly [Key in keyof Fields]?: (value: Fields[Key]) => Fields[Key]
 }
 
-export type Refs<Fields extends object> = {
+export type Refs<Fields extends object> = undefined | {
   readonly [Key in keyof Fields]?: RefObject<HTMLElement>
 }
 
@@ -20,7 +20,7 @@ export interface Options<Fields extends Readonly<object>, FieldsRefs extends Ref
   refs?: FieldsRefs
 }
 
-export const useForm = <Fields extends object, FieldsRefs extends Refs<Fields>>(options: Options<Fields, FieldsRefs>) => {
+export const useForm = <Fields extends object, FieldsRefs extends Refs<Fields> = undefined>(options: Options<Fields, FieldsRefs>) => {
   const [fields, setFields] = useState(options.fields);
 
   const [touched, setTouched] = useState(() => {
