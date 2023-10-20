@@ -16,6 +16,11 @@ Form utilities for React written in TypeScript
   - [References](#references)
   - [Programmatic Value Setting](#programmatic-value-setting)
   - [Form status](#form-status)
+- [Contributing](#contributing)
+- [License](#license)
+- [Code Of Conduct](#code-of-conduct)
+- [Security](#security)
+
 
 
 ## Features
