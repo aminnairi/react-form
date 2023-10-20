@@ -1,244 +1,203 @@
-import { ChangeEventHandler, FormEventHandler, RefObject, useCallback, useEffect, useMemo, useState } from "react";
-import { D as Dict, A as List } from "@mobily/ts-belt";
+import { ChangeEvent, ChangeEventHandler, FormEventHandler, RefObject, useCallback, useMemo, useState } from "react";
 
-export type Validations<Fields extends object> = {
-  readonly [Key in keyof Fields]?: (value: Fields[Key], fields: Fields) => string | null
+export type UseFormFields = Record<string, string | number | boolean | File | FileList>
+
+export type UseFormValidations<Fields> = {
+  readonly [Key in keyof Fields]: (value: Fields[Key], fields: Fields) => string
 }
 
-export type Transformations<Fields extends object> = {
-  readonly [Key in keyof Fields]?: (value: Fields[Key]) => Fields[Key]
+export type UseFormErrors<Fields> = Exclude<{
+  readonly [Key in keyof Fields]: string
+}, void>
+
+export type UseFormTransformations<Fields> = {
+  readonly [Key in keyof Fields]: (value: Fields[Key], fields: Fields) => Fields[Key]
 }
 
-export type Refs<Fields extends object> = {
-  readonly [Key in keyof Fields]?: RefObject<HTMLElement>
+export type UseFormReferences<Fields, Reference> = {
+  readonly [Key in keyof Fields]: RefObject<Reference>
 }
 
-export interface Options<Fields extends Readonly<object>, FieldsRefs extends Refs<Fields>> {
-  fields: Fields
-  transformations?: Transformations<Fields>
-  validations?: Validations<Fields>,
-  refs?: FieldsRefs
+export type UseFormTouchedFields<Fields> = Exclude<{
+  readonly [Key in keyof Fields]: boolean
+}, void>
+
+export type SubmitCallbackInfered<SubmitCallback> = SubmitCallback extends (callback: (fields: infer Fields) => void) => FormEventHandler ? (fields: Fields) => void : never;
+
+export type UseFormOptions<Fields, References> = {
+  fields: Fields,
+  references: References,
+  validations: UseFormValidations<Fields>,
+  transformations: UseFormTransformations<Fields>,
 }
 
-export const useForm = <Fields extends object, FieldsRefs extends Refs<Fields> = Refs<Fields>>(options: Options<Fields, FieldsRefs>) => {
+export const useForm = <Fields extends UseFormFields, References extends UseFormReferences<Fields, Reference>, Reference extends HTMLElement = HTMLElement>(options: UseFormOptions<Fields, References>) => {
   const [fields, setFields] = useState(options.fields);
 
-  const [touched, setTouched] = useState(() => {
-    return Dict.fromPairs(List.map(Dict.toPairs(options.fields), ([fieldName]) => {
-      return [
-        fieldName,
-        false
-      ];
-    })) as Record<keyof Fields, boolean>;
-  });
-
-  const [errors, setErrors] = useState(() => {
-    return Dict.fromPairs(List.map(Dict.toPairs(options.fields), ([fieldName]): [string, string | null] => {
-      return [
-        fieldName,
-        null
-      ];
-    }));
-  });
-
-  const untouched = useMemo(() => {
-    return Dict.fromPairs(List.map(Dict.toPairs(touched), ([fieldName, fieldTouched]) => {
-      return [
-        fieldName,
-        !fieldTouched
-      ];
-    })) as Record<keyof Fields, boolean>;
-  }, [touched]);
-
-  const dirty = useMemo(() => {
-    return List.some(Dict.values(touched), touchedField => touchedField);
-  }, [touched]);
-
-  const pristine = useMemo(() => !dirty, [dirty]);
+  const errors = useMemo(<Key extends keyof Fields>() => {
+    const entries = Object.entries(fields) as [Key, Fields[Key]][];
+    const errorsEntries = entries.map(([key, value]) => [key, options.validations[key](value, fields)]);
+    const errors = Object.fromEntries(errorsEntries) as UseFormErrors<Fields>;
+    
+    return errors;
+  }, [fields, options.validations]);
 
   const disabled = useMemo(() => {
-    return Object.values(errors).some((error) => {
-      return typeof error === "string" && error.trim().length !== 0;
-    });
+    const errorsValues = Object.values(errors)
+    const disabled = errorsValues.some(error => error)
+    return disabled;
   }, [errors]);
 
-  const hasError = useMemo<Record<keyof Fields, boolean>>(() => {
-    return Dict.fromPairs(List.map(Dict.toPairs(errors), ([fieldName, error]) => {
-      return [
-        fieldName,
-        typeof error === "string"
-      ];
-    })) as Record<keyof Fields, boolean>;
-  }, [errors]);
+  const [touchedFields, setTouchedFields] = useState(<Key extends keyof Fields>() => {
+    const entries = Object.keys(fields) as Key[];
+    const touchedEntries = entries.map((key) => [key, false]) as [Key, boolean][];
+    const touched = Object.fromEntries(touchedEntries) as UseFormTouchedFields<Fields>;
 
-  const reset = useCallback(() => {
-    setFields(options.fields);
-  }, []);
+    return touched;
+  });
 
-  const set = useCallback((fieldName: keyof Fields, value: Fields[typeof fieldName]) => {
-    setFields(oldField => {
-      return {
-        ...oldField,
-        [fieldName]: value
-      }
-    });
-  }, []);
+  const dirty = useMemo(() => {
+    const touchedFieldsValues = Object.values(touchedFields);
+    const dirty = touchedFieldsValues.some((touchedField) => touchedField);
 
-  const focus = useCallback((fieldName: keyof Fields) => {
-    options?.refs?.[fieldName as keyof Fields]?.current?.focus();
-  }, [options.refs]);
+    return dirty;
+  }, [touchedFields]);
 
-  const change = useCallback((field: keyof Fields): ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> => event => {
-    setTouched(oldTouched => {
-      return {
-        ...oldTouched,
-        [field]: true
-      };
-    });
+  const set = useCallback(<Key extends keyof Fields>(key: Key, value: Fields[Key]) => {
+    const transformation = options.transformations[key];
 
-    setFields(oldFields => {
-      const value = event.target.value as Fields[keyof Fields];
-      const defaultTransformation = (value: unknown) => value;
-      const transformation = options?.transformations?.[field] || defaultTransformation;
-
-      return {
-        ...oldFields,
-        [field]: transformation(value)
-      };
-    });
+    setFields(oldFields => ({
+      ...oldFields,
+      [key]: transformation(value, oldFields)
+    }));
   }, [options.transformations]);
 
-  const store = useCallback((field: keyof Fields): ChangeEventHandler<HTMLInputElement> => event => {
-    setTouched(oldTouched => {
-      return {
-        ...oldTouched,
-        [field]: true
-      };
-    });
+  const focus = useCallback(<Key extends keyof Fields>(key: Key) => {
+    options.references[key].current?.focus();
+  }, [options.references]);
 
-    setFields(oldFields => {
-      const value = event.target.files as Fields[keyof Fields];
-      const defaultTransformation = (value: unknown) => value;
-      const transformation = options?.transformations?.[field] || defaultTransformation;
+  const input = useCallback(<Key extends keyof Fields>(key: Key) => (event: ChangeEvent<HTMLInputElement>) => {
+    const transformation = options.transformations[key];
+    const value = event.target.value as Fields[Key];
 
-      return {
-        ...oldFields,
-        [field]: transformation(value)
-      };
-    });
+    setFields(oldFields => ({
+      ...oldFields,
+      [key]: transformation(value, oldFields)
+    }));
+
+    setTouchedFields(oldTouchedFields => ({
+      ...oldTouchedFields,
+      [key]: true
+    }))
   }, [options.transformations]);
 
-  const select = useCallback((field: keyof Fields): ChangeEventHandler<HTMLSelectElement> => event => {
-    setTouched(oldTouched => {
-      return {
-        ...oldTouched,
-        [field]: true
-      };
-    });
+  const select = useCallback(<Key extends keyof Fields>(key: Key) => (event: ChangeEvent<HTMLSelectElement>) => {
+    const transformation = options.transformations[key];
+    const value = event.target.value as Fields[Key];
 
-    setFields(oldFields => {
-      const value = event.target.value as Fields[keyof Fields];
-      const defaultTransformation = (value: unknown) => value;
-      const transformation = options?.transformations?.[field] || defaultTransformation;
+    setFields(oldFields => ({
+      ...oldFields,
+      [key]: transformation(value, oldFields)
+    }));
 
-      return {
-        ...oldFields,
-        [field]: transformation(value)
-      };
-    });
+    setTouchedFields(oldTouchedFields => ({
+      ...oldTouchedFields,
+      [key]: true
+    }))
+  }, [options.transformations]);
+  
+  const check = useCallback(<Key extends keyof Fields>(key: Key) => (event: ChangeEvent<HTMLInputElement>) => {
+    const transformation = options.transformations[key];
+    const value = event.target.checked as Fields[Key];
+
+    setFields(oldFields => ({
+      ...oldFields,
+      [key]: transformation(value, oldFields)
+    }));
+
+    setTouchedFields(oldTouchedFields => ({
+      ...oldTouchedFields,
+      [key]: true
+    }))
   }, [options.transformations]);
 
-  const check = useCallback((field: keyof Fields): ChangeEventHandler<HTMLInputElement> => event => {
-    setTouched(oldTouched => {
-      return {
-        ...oldTouched,
-        [field]: true
-      };
-    });
+  const file = useCallback(<Key extends keyof Fields>(key: Key) => (event: ChangeEvent<HTMLInputElement>) => {
+    const transformation = options.transformations[key];
+    const value = (event.target.files?.[0] ?? new File([], "")) as Fields[Key]
 
-    setFields(oldFields => {
-      const value = event.target.checked as Fields[keyof Fields];
-      const defaultTransformation = (value: unknown) => value;
-      const transformation = options?.transformations?.[field] || defaultTransformation;
+    setFields(oldFields => ({
+      ...oldFields,
+      [key]: transformation(value, oldFields)
+    }));
 
-      return {
-        ...oldFields,
-        [field]: transformation(value)
-      };
-    });
+    setTouchedFields(oldTouchedFields => ({
+      ...oldTouchedFields,
+      [key]: true
+    }))
   }, [options.transformations]);
 
-  const onSubmit = useCallback((callback: (fields: Fields) => void): FormEventHandler => (event) => {
+  const files = useCallback(<Key extends keyof Fields>(key: Key): ChangeEventHandler<HTMLInputElement> => (event) => {
+    const transformation = options.transformations[key];
+    const value = event.target.files as Fields[Key];
+
+    setFields(oldFields => ({
+      ...oldFields,
+      [key]: transformation(value, oldFields)
+    }));
+
+    setTouchedFields(oldTouchedFields => ({
+      ...oldTouchedFields,
+      [key]: true
+    }))
+  }, [options.transformations]);
+
+  const submit = useCallback(<Key extends keyof Fields>(callback: (fields: Fields) => void): FormEventHandler<HTMLFormElement> => event => {
     event.preventDefault();
 
-    setErrors(() => {
-      setTouched(oldTouched => {
-        return Dict.fromPairs(List.map(Dict.toPairs(oldTouched), ([fieldName]) => {
-          return [
-            fieldName,
-            true
-          ];
-        })) as Record<keyof Fields, boolean>;
-      });
+    setTouchedFields(oldTouchedFields => {
+      const oldTouchedFieldsEntries = Object.entries(oldTouchedFields) as [Key, Fields[Key]][];
+      const oldTouchedFieldsEntriesEnabled = oldTouchedFieldsEntries.map(([key]) => [key, true]) as [Key, boolean][];
+      const newTouchedFields = Object.fromEntries(oldTouchedFieldsEntriesEnabled) as UseFormTouchedFields<Fields>;
 
-      const newErrors = Dict.fromPairs(List.map(Dict.toPairs(fields), ([fieldName]) => {
-        const value = fields[fieldName as keyof Fields];
-        const defaultTransformation = () => null;
-        const transformation = options?.validations?.[fieldName as keyof Fields] ?? defaultTransformation;
+      return newTouchedFields;
+    })
 
-        return [
-          fieldName,
-          transformation(value, fields)
-        ];
-      })) as Record<keyof Fields, string | null>;
+    if (disabled) {
+      const errorsEntries = Object.entries(errors) as [Key, string][];
+      const firstErrorFound = errorsEntries.find(([, error]) => !!error);
 
-      const foundFieldWithError = List.find(Dict.toPairs(newErrors), ([, error]) => {
-        return error !== null;
-      });
+      
+      if (firstErrorFound) {
+        const [key] = firstErrorFound;
 
-      if (foundFieldWithError) {
-        focus(foundFieldWithError[0] as keyof Fields);
-      } else {
-        callback(fields);
+        focus(key);
       }
 
-      return newErrors;
-    });
+      return;
+    }
 
-  }, [fields, options.validations, options.refs]);
+    callback(fields);
 
-  useEffect(() => {
-    setErrors(Dict.fromPairs(List.map(Dict.toPairs(fields), ([fieldName, fieldValue]) => {
-      const value = fieldValue as Fields[keyof Fields];
-      const defaultValidation = () => null;
-      const validation = options?.validations?.[fieldName as keyof Fields] ?? defaultValidation;
-
-      return [
-        fieldName,
-        validation(value, fields)
-      ];
-    })));
-  }, [fields, options.validations]);
+  }, [disabled, fields, errors, focus]);
 
   return {
     fields,
-    errors,
-    refs: options.refs,
-    disabled,
-    hasError,
-    touched,
-    untouched,
-    change,
-    check,
-    select,
-    store,
-    onSubmit,
+    touchedFields,
     dirty,
-    pristine,
-    reset,
+    disabled,
+    errors,
+    references: options.references,
     set,
-    focus
+    input,
+    select,
+    check,
+    file,
+    files,
+    focus,
+    submit
   };
 };
 
-export type OnSubmitCallback<OnSubmit> = OnSubmit extends (callback: (fields: infer Fields) => void) => FormEventHandler ? (fields: Fields) => void : never
+export const noValidation = () => "";
+
+export const noTransformation = <Value>(value: Value) => value;
