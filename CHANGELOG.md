@@ -2,10 +2,15 @@
 
 ## Versions
 
-- [`1.1.0`](#101)
+- [`1.1.1`](#111)
+- [`1.1.0`](#110)
 - [`1.0.1`](#101)
 - [`1.0.0`](#100)
 - [`0.1.0`](#010)
+
+## 1.1.1
+
+- Refs cannot be accessed anymore ([#8](https://github.com/aminnairi/react-form/issues/8))
 
 ## 1.1.0
 
