@@ -458,3 +458,19 @@ export const App = () => {
 ```
 
 [Go back to summary](#summary)
+
+## Contributing
+
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
+## License
+
+See [`LICENSE`](./LICENSE).
+
+## Code Of Conduct
+
+See [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md).
+
+## Security
+
+See [`SECURITY.md`](./SECURITY.md).
