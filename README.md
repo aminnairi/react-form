@@ -59,6 +59,10 @@ npm install @aminnairi/react-form
 Fields represent the data within your form, which can encompass various types such as strings, numbers, booleans, or files. You can employ these fields in controlled form elements within your JSX to mirror the field's value and keep it in sync with the useForm hook.
 
 ```tsx
+type fields = object
+```
+
+```tsx
 import React from "react";
 import { useForm } from "@aminnairi/react-form";
 
@@ -90,16 +94,26 @@ export const App = () => {
 To modify the values of fields, you can utilize the change, select, check, or store functions. Be sure to choose the one that aligns with the specific field you are updating.
 
 ```tsx
+import { ChangeEventHandler } from "react";
+
+type store = (field: keyof Fields): ChangeEventHandler<HTMLInputElement>;
+type select = (field: keyof Fields): ChangeEventHandler<HTMLSelectElement>;
+type check = (field: keyof Fields): ChangeEventHandler<HTMLInputElement>;
+type change = (field: keyof Fields): ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+```
+
+```tsx
 import React from "react";
 import { useForm } from "@aminnairi/react-form";
 
 export const App = () => {
-  const { fields, change, select, check } = useForm({
+  const { fields, change, select, check, store } = useForm({
     fields: {
       email: "",
       password: "",
       country: "fr",
-      termsOfUseAccepted: false
+      termsOfUseAccepted: false,
+      avatar: null
     }
   });
 
@@ -128,6 +142,10 @@ export const App = () => {
         type="checkbox"
         checked={fields.termsOfUseAccepted}
         onChange={check("termsOfUseAccepted")} />
+      <input
+        type="file"
+        checked={fields.avatar}
+        onChange={store("avatar")} />
       <button type="submit">
         Login
       </button>
@@ -141,6 +159,14 @@ export const App = () => {
 ### Submission
 
 Submission enables you to trigger the default HTML behavior for forms. For example, you can press the Enter key to submit a form when a text field is in focus, providing a quick submission method without the need to manually click the submit button. The onSubmit function empowers you to prevent the browser's default behavior, which involves sending an HTTP request and completely reloading the page. This functionality ensures that you retain the JavaScript values entered in the form, enhancing the user experience. Additionally, the OnSubmitCallback is a TypeScript utility type designed to dynamically compute the form's defined fields, thus reducing the risk of errors, such as unintentionally removing a field in the near future.
+
+```tsx
+import { FormEventHandler } from "react";
+
+type OnSubmitCallback<OnSubmit> = OnSubmit extends (callback: (fields: infer Fields) => void) => FormEventHandler ? (fields: Fields) => void : never
+
+type onSubmit = (callback: (fields: Fields) => void): FormEventHandler;
+```
 
 ```tsx
 import React, { useCallback } from "react";
@@ -185,6 +211,12 @@ Errors provides users with quick feedback regarding issues with one or more fiel
 The `hasError` property is an object that includes keys corresponding to the fields defined in the fields property of the useForm hook. It allows you to determine whether a field has an error or not.
 
 The `disabled` property is a convenient feature that lets you disable an HTML element if one or more errors are present in the form
+
+```tsx
+type errors = Record<keyof Fields, string | null>;
+type hasError = Record<keyof Fields, boolean>;
+type disabled = boolean;
+```
 
 ```tsx
 import React from "react";
@@ -247,6 +279,12 @@ export const App = () => {
 Transformations prove valuable when you need to modify user inputs, such as enforcing lowercase characters for an email field or restricting a credit card input to a specific range of numbers. All you need to do is supply the useForm hook with a transformations property that specifies the transformation to apply for each field. The hook takes care of the rest, automatically applying these transformations to your field values, eliminating the need for any additional manual steps.
 
 ```tsx
+type Transformations<Fields extends object> = {
+  readonly [Key in keyof Fields]?: (value: Fields[Key]) => Fields[Key]
+}
+```
+
+```tsx
 import React from "react";
 import { useForm } from "@aminnairi/react-form";
 
@@ -286,6 +324,14 @@ export const App = () => {
 ### References
 
 References offer a convenient way to highlight fields with errors. For example, when a user submits the form, whether by clicking a submit button or pressing Enter in a text field, the hook will automatically focus on the first field with an error if you've associated that field with a reference. You can create a reference using React's `createRef` function, specifying the reference type in its generic argument. Once you've set up the reference, simply attach it to your JSX, and the hook will take care of the rest. Additionally, you can programmatically focus on a field by providing its name using the `focus` function exported from the `useForm` hook.
+
+```tsx
+type Refs<Fields extends object> = {
+  readonly [Key in keyof Fields]?: RefObject<HTMLElement>
+}
+
+type focus = (fieldName: keyof Fields) => void;
+```
 
 ```tsx
 import React, { createRef, useEffect } from "react";
@@ -356,6 +402,11 @@ export const App = () => {
 Occasionally, you may wish to prefill your form with data that arrives later, perhaps via an HTTP request. In such situations, you should consider utilizing the `set` function exported from the `useForm` hook. This function takes two arguments: the name of the field and the new value for that field. Additionally, you can reset the entire form to its initial state, which is specified in the fields property of the `useForm` hook, by invoking the `reset` function also exported by the hook.
 
 ```tsx
+type reset = (): void;
+type set = (fieldName: keyof Fields, value: Fields[typeof fieldName]): void;
+```
+
+```tsx
 import React, { useEffect } from "react";
 import { useForm } from "@aminnairi/react-form";
 
@@ -403,6 +454,13 @@ export const App = () => {
 Fields and the form itself have associated states. You can determine if a field has been interacted with by using the `touched` and `untouched` properties, which are exported from the `useForm` hook. A "touched" field is one that has been altered by the user, meaning its value has changed through one of the following functions: `change`, `select`, `check`, or `store`. 
 
 In a similar manner, you can assess whether the entire form has been touched using the `pristine` and `dirty` properties, also exported from the `useForm` hook. The `pristine` property is `true` when any of the fields have been touched, and conversely, the `dirty` property is `true` when there has been interaction with any part of the form.
+
+```tsx
+type touched = Record<keyof Fields, boolean>;
+type untouched = Record<keyof Fields, boolean>;
+type dirty = boolean;
+type pristine = boolean;
+```
 
 ```tsx
 import React from "react";
