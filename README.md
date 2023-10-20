@@ -525,6 +525,12 @@ export const App = () => {
 
 [Go back to summary](#summary)
 
+## Changelog
+
+See [`CHANGELOG.md`](./CHANGELOG.md).
+
+[Go back to summary](#summary)
+
 ## Contributing
 
 See [`CONTRIBUTING.md`](./CONTRIBUTING.md).
