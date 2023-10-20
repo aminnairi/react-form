@@ -183,7 +183,7 @@ export const useForm = <Fields extends object, FieldsRefs extends Refs<Fields>>(
 
       const newErrors = Dict.fromPairs(List.map(Dict.toPairs(fields), ([fieldName]) => {
         const value = fields[fieldName as keyof Fields];
-        const defaultTransformation = (value: unknown) => value;
+        const defaultTransformation = () => null;
         const transformation = options?.validations?.[fieldName as keyof Fields] ?? defaultTransformation;
 
         return [
