@@ -31,7 +31,7 @@ Form utilities for React written in TypeScript
 - Written in TypeScript from the ground up
 - Convenience functions & properties allowing you to quickly scafold forms in seconds
 - Sane default behavior for a better user experience
-- Enough control to allow you to use your own components and styling without having to write all the logic down
+- Lifted state logic for you with full control over the UI logic
 - Best developer experience when used with TypeScript
 - No assumptions made when validating data: use your library of choice, whether it is Zod, Joi, Yup, etc... No 
 
@@ -52,471 +52,241 @@ npm install @aminnairi/react-form
 
 [Go back to summary](#summary)
 
+## Installation
+
+```bash
+npm uninstall @aminnairi/react-form
+```
+
+[Go back to summary](#summary)
+
 ## Usage
 
-### Fields
-
-Fields represent the data within your form, which can encompass various types such as strings, numbers, booleans, or files. You can employ these fields in controlled form elements within your JSX to mirror the field's value and keep it in sync with the useForm hook.
-
 ```tsx
-type fields = object
-```
+import { RefObject, createRef, useCallback, useEffect } from "react";
+import { SubmitCallbackInfered, useForm, noValidation, noTransformation } from "@aminnairi/react-form";
 
-```tsx
-import React from "react";
-import { useForm } from "@aminnairi/react-form";
-
-export const App = () => {
-  const { fields } = useForm({
-    fields: {
-      email: "",
-      password: ""
-    }
-  });
-
-  return (
-    <form>
-      <input
-        type="email"
-        value={fields.email} />
-      <input
-        type="password"
-        value={fields.password} />
-    </form>
-  );
+// Define your fields as a type
+type Fields = {
+  readonly name: string,
+  readonly country: "fr" | "en" | "es",
+  readonly age: number,
+  readonly aggreed: boolean,
+  readonly avatar: File,
 }
-```
 
-[Go back to summary](#summary)
+// Define the references that will be used to control focus for your fields
+type References = {
+  readonly name: RefObject<HTMLInputElement>,
+  readonly country: RefObject<HTMLSelectElement>,
+  readonly age: RefObject<HTMLInputElement>,
+  readonly aggreed: RefObject<HTMLInputElement>,
+  readonly avatar: RefObject<HTMLInputElement>,
+}
 
-### Inputs
-
-To modify the values of fields, you can utilize the change, select, check, or store functions. Be sure to choose the one that aligns with the specific field you are updating.
-
-```tsx
-import { ChangeEventHandler } from "react";
-
-type store = (field: keyof Fields): ChangeEventHandler<HTMLInputElement>;
-type select = (field: keyof Fields): ChangeEventHandler<HTMLSelectElement>;
-type check = (field: keyof Fields): ChangeEventHandler<HTMLInputElement>;
-type change = (field: keyof Fields): ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-```
-
-```tsx
-import React from "react";
-import { useForm } from "@aminnairi/react-form";
-
-export const App = () => {
-  const { fields, change, select, check, store } = useForm({
+export default function App() {
+  const { fields, touchedFields, errors, references, set, input, select, file, check, disabled, submit, dirty } = useForm<Fields, References>({
+    // Fields must comply with the shape of your data
     fields: {
-      email: "",
-      password: "",
+      // Fields can be strings
+      name: "",
       country: "fr",
-      termsOfUseAccepted: false,
-      avatar: null
-    }
-  });
-
-  return (
-    <form>
-      <input
-        type="email"
-        value={fields.email}
-        onChange={change("email")} />
-      <input
-        type="password"
-        value={fields.password}
-        onChange={change("password")} />
-      <select value={fields.country} onChange={select("country")}>
-        <option value="fr">
-          France
-        </option>
-        <option value="de">
-          Germany
-        </option>
-        <option value="es">
-          Spain 
-        </option>
-      </select>
-      <input
-        type="checkbox"
-        checked={fields.termsOfUseAccepted}
-        onChange={check("termsOfUseAccepted")} />
-      <input
-        type="file"
-        checked={fields.avatar}
-        onChange={store("avatar")} />
-      <button type="submit">
-        Login
-      </button>
-    </form>
-  );
-}
-```
-
-[Go back to summary](#summary)
-
-### Submission
-
-Submission enables you to trigger the default HTML behavior for forms. For example, you can press the Enter key to submit a form when a text field is in focus, providing a quick submission method without the need to manually click the submit button. The onSubmit function empowers you to prevent the browser's default behavior, which involves sending an HTTP request and completely reloading the page. This functionality ensures that you retain the JavaScript values entered in the form, enhancing the user experience. Additionally, the OnSubmitCallback is a TypeScript utility type designed to dynamically compute the form's defined fields, thus reducing the risk of errors, such as unintentionally removing a field in the near future.
-
-```tsx
-import { FormEventHandler } from "react";
-
-type OnSubmitCallback<OnSubmit> = OnSubmit extends (callback: (fields: infer Fields) => void) => FormEventHandler ? (fields: Fields) => void : never
-
-type onSubmit = (callback: (fields: Fields) => void): FormEventHandler;
-```
-
-```tsx
-import React, { useCallback } from "react";
-import { OnSubmitCallback, useForm } from "@aminnairi/react-form";
-
-export const App = () => {
-  const { fields, change, onSubmit } = useForm({
-    fields: {
-      email: "",
-      password: ""
-    }
-  });
-
-  const login: OnSubmitCallback<typeof onSubmit> = useCallback((fields) => {
-    console.log(fields);
-  }, []);
-
-  return (
-    <form onSubmit={onSubmit(login)}>
-      <input
-        type="email"
-        value={fields.email}
-        onChange={change("email")} />
-      <input
-        type="password"
-        value={fields.password}
-        onChange={change("password")} />
-      <button type="submit">
-        Login
-      </button>
-    </form>
-  );
-}
-```
-
-[Go back to summary](#summary)
-
-### Errors
-
-Errors provides users with quick feedback regarding issues with one or more fields in the form. By supplying the useForm with a validations property for each field defined in the fields property, you can populate the errors property with custom error messages at your convenience. Each validation is a function that takes the current value and the entire set of fields as input, enabling you to create pure functions for field validation. If a validation function returns null, it indicates that no errors have been detected for the current working field. You can retrieve errors using the errors property.
-
-The `hasError` property is an object that includes keys corresponding to the fields defined in the fields property of the useForm hook. It allows you to determine whether a field has an error or not.
-
-The `disabled` property is a convenient feature that lets you disable an HTML element if one or more errors are present in the form
-
-```tsx
-type errors = Record<keyof Fields, string | null>;
-type hasError = Record<keyof Fields, boolean>;
-type disabled = boolean;
-```
-
-```tsx
-import React from "react";
-import { useForm } from "@aminnairi/react-form";
-
-export const App = () => {
-  const { fields, change, errors, hasError, disabled } = useForm({
-    fields: {
-      email: "",
-      password: ""
+      // Or numbers
+      age: 0,
+      // Or boolean
+      aggreed: false,
+      // Or files (File and FileList)
+      avatar: new File([], ""),
     },
+    // Validation provide a mechanism for returning errors that you can plug
+    // with your favorite data validation library like Zod, Joi, etc...
     validations: {
-      email: value => {
-        if (!value.includes("@")) {
-          return "Should contains an @ symbol";
+      // Validation always provide the entire fields object
+      name: (value, fields) => {
+        // So that you can check for errors with other fields inside one field
+        // as well
+        if (value === fields.country) {
+          return "The name should be different from the country";
         }
 
-        return null;
+        // Return an empty string if you don't have any errors
+        return "";
       },
-      password: (value, fields) => {
-        if (value === fields.email) {
-          return "Should not equal to the email";
+      // You do not need to provide explicit validation for each field
+      country: noValidation,
+      // But this is a good way of sending feedback via errors
+      aggreed: (value) => {
+        // Values are correctly infered from the Fields type to prevent typing
+        // mistsakes
+        if (value !== true) {
+          return "You must agree the terms of use"
         }
 
-        return null;
-      }
-    }
-  });
+        // Return an empty string if you don't have any errors
+        return "";
+      },
+      avatar: (value) => {
+        const fiftyKb = 50000;
 
-  return (
-    <form>
-      <input
-        type="email"
-        value={fields.email}
-        onChange={change("email")} />
-      {hasError.email && (
-        <small>
-          {errors.email}
-        </small>
-      )}
-      <input
-        type="password"
-        value={fields.password}
-        onChange={change("password")} />
-      {hasError.password && (
-        <small>
-          {errors.password}
-        </small>
-      )}
-      <button disabled={disabled}>
-        Login
-      </button>
-    </form>
-  );
-}
-```
+        // You can validate files from the client side
+        if (value.size > fiftyKb) {
+          // Pretty useful to unload the server, isn't it?
+          return "File is too large";
+        }
 
-### Transformations
-
-Transformations prove valuable when you need to modify user inputs, such as enforcing lowercase characters for an email field or restricting a credit card input to a specific range of numbers. All you need to do is supply the useForm hook with a transformations property that specifies the transformation to apply for each field. The hook takes care of the rest, automatically applying these transformations to your field values, eliminating the need for any additional manual steps.
-
-```tsx
-type Transformations<Fields extends object> = {
-  readonly [Key in keyof Fields]?: (value: Fields[Key]) => Fields[Key]
-}
-```
-
-```tsx
-import React from "react";
-import { useForm } from "@aminnairi/react-form";
-
-export const App = () => {
-  const { fields, change } = useForm({
-    fields: {
-      email: "",
-      password: ""
+        // Here, no errors so an empty string
+        return "";
+      },
     },
+    // Transformation are useful if you need to restrain the input from a user
     transformations: {
-      email: value => {
-        return value.trim().toLowerCase();
-      }
-    }
-  });
+      // You don't need to provide transformation for each field
+      name: noTransformation,
+      // Fields that have no transformation will simply get the raw value from
+      // the user
+      country: noTransformation,
+      // But this is always a good thing to provide some transformation to
+      // prevent user's mistaskes
+      age: (value, fields) => {
+        // You also have access to all other properties here
+        if (fields.country ==== "fr") {
+          // So that you can have complex transformation for your field
+          if (value < 18) {
+            return 18;
+          }
 
-  return (
-    <form>
-      <input
-        type="email"
-        value={fields.email}
-        onChange={change("email")} />
-      <input
-        type="password"
-        value={fields.password}
-        onChange={change("password")} />
-      <button type="submit">
-        Login
-      </button>
-    </form>
-  );
-}
-```
+          if (value > 50) {
+            return 50;
+          }
+        } 
 
-[Go back to summary](#summary)
+        // You may want different transformation based on the value of other
+        // fields for instance
+        if (fields.country === "es") {
+          if (value < 16) {
+            return 16;
+          }
 
-### References
-
-References offer a convenient way to highlight fields with errors. For example, when a user submits the form, whether by clicking a submit button or pressing Enter in a text field, the hook will automatically focus on the first field with an error if you've associated that field with a reference. You can create a reference using React's `createRef` function, specifying the reference type in its generic argument. Once you've set up the reference, simply attach it to your JSX, and the hook will take care of the rest. Additionally, you can programmatically focus on a field by providing its name using the `focus` function exported from the `useForm` hook.
-
-```tsx
-type Refs<Fields extends object> = {
-  readonly [Key in keyof Fields]?: RefObject<HTMLElement>
-}
-
-type focus = (fieldName: keyof Fields) => void;
-```
-
-```tsx
-import React, { createRef, useEffect } from "react";
-import { useForm } from "@aminnairi/react-form";
-
-export const App = () => {
-  const { fields, change, errors, refs, focus } = useForm({
-    fields: {
-      email: "",
-      password: ""
-    },
-    refs: {
-      email: createRef<HTMLInputElement>(),
-      password: createRef<HTMLInputElement>()
-    },
-    validations: {
-      email: value => {
-        if (!value.includes("@")) {
-          return "Should contains an @ symbol";
+          if (value > 60) {
+            return 60;
+          }
         }
 
-        return null;
+        return value;
       },
-      password: (value, fields) => {
-        if (value === fields.email) {
-          return "Should not equal to the email";
-        }
-
-        return null;
-      }
+      // Again no explicit transformation is required if you don't want
+      aggreed: noTransformation,
+      // Simply call this function to disable transformation
+      avatar: noTransformation,
+    },
+    // References are used to focus the first field that has an error when
+    // submitting the form, this means that you must not disable the submit
+    // button to have this feature
+    references: {
+      // This is always the same function that is called
+      name: createRef(),
+      // Because we need to get a reference
+      country: createRef(),
+      // To those elements
+      age: createRef(),
+      // In order to trigger the HTMLElement.focus
+      aggreed: createRef(),
+      // Function and focus the first field that may have an error, you can
+      // always disable the submit button whenever the form has errors in order
+      // to disable this behavior
+      avatar: createRef()
     }
   });
+
+  // Here we use the SubmitCallbackInfered in order to "guess" the fields that
+  // are used in this form but this may be a bit overkill if you already defined
+  // your fields by hand using the generic argument and you may want to simply
+  // create a function that has the Fields as argument without calling this
+  // TypeScript utility type
+  const request: SubmitCallbackInfered<typeof submit> = useCallback((fields) => {
+    // The function is purposely made for requesting data from your server using
+    // asynchronous requests sur as Fetch or Axios, and the default behavior of
+    // the browser sending an HTTP request is automatically prevented when
+    // passing this function to the submit function (see below)
+    console.log(fields.age);
+  }, []);
 
   useEffect(() => {
-    focus("email");
+    // Use the set function if you need to manually set fields, this is great
+    // for when you want to display a details page with a form to update an item
+    // and want to provide the user with some initial data that may be requested
+    // from an asynchronous HTTP request, in this case the set function is
+    // useful
+    set("age", 10);
+    set("name", "Jean");
+    // Do not put `set` in the dependencies array, otherwise you'll create an
+    // infinite loop, you  can disable the
+    // eslint-plugin-react-hook/rules-of-hook rule if you'd like
   }, []);
 
   return (
-    <form>
-      <input
-        type="email"
-        value={fields.email}
-        onChange={change("email")}
-        ref={refs?.email} />
-      <small>
-        {errors.email}
-      </small>
-      <input
-        type="password"
-        value={fields.password}
-        onChange={change("password")}
-        ref={refs?.password} />
-      <small>
-        {errors.password}
-      </small>
-      <button>
-        Login
-      </button>
-    </form>
-  );
-}
-```
-
-[Go back to summary](#summary)
-
-### Programmatic Value Setting
-
-Occasionally, you may wish to prefill your form with data that arrives later, perhaps via an HTTP request. In such situations, you should consider utilizing the `set` function exported from the `useForm` hook. This function takes two arguments: the name of the field and the new value for that field. Additionally, you can reset the entire form to its initial state, which is specified in the fields property of the `useForm` hook, by invoking the `reset` function also exported by the hook.
-
-```tsx
-type reset = (): void;
-type set = (fieldName: keyof Fields, value: Fields[typeof fieldName]): void;
-```
-
-```tsx
-import React, { useEffect } from "react";
-import { useForm } from "@aminnairi/react-form";
-
-export const App = () => {
-  const { fields, change, set, reset } = useForm({
-    fields: {
-      email: "",
-      password: "",
-    }
-  });
-
-  useEffect(() => {
-    const email = window.localStorage.getItem("email");
-
-    if (typeof email === "string") {
-      set("email", email);
-    }
-  }, []);
-
-  return (
-    <form>
-      <input
-        type="email"
-        value={fields.email}
-        onChange={change("email")} />
-      <input
-        type="password"
-        value={fields.password}
-        onChange={change("password")} />
+    <form onSubmit={submit(request)}>
+      {/* dirty is a boolean that will be true whenever the user has changed one
+      of the field in the form */}
+      {dirty && <small>This is a hint information.</small>}
+      {/* disabled on the other hand is a boolean that is true whenever one of
+      the field has an error, this is pretty useful if you need to disable the
+      entire form until the user has made the correct input but remember that by
+      doing so, you disable the auto focus feature that allows a user to quickly
+      navigate through errors when the form is submitted */}
+      {disabled && <small>Form contains error, please check your inputs</small>}
+      <div>
+        {/* the references property contains all properties defined in the
+        References type that allow you to plug a React ref to an element, and
+        whenever the user has an error in another field, by typing enter or by
+        submitting the form, the reference will be used to focus the field that
+        has an error, of course this won't work if you don't add it manually in
+        the JSX code so don't forget it! */}
+        <input ref={references.name} type="text" value={fields.name} onChange={input("name")} />
+        {touchedFields.name && <small style={{ color: "red" }}>{errors.name}</small>}
+      </div>
+      <div>
+        {/* The input function will contain a nice utility function that will
+        help you quickly update any field that is an HTMLInputElement, and this
+        input will be controlled by its field value here in the fields property */}
+        <input ref={references.age} type="number" value={fields.age} onChange={input("age")} />
+        {touchedFields.age && <small style={{ color: "red" }}>{errors.age}</small>}
+      </div>
+      <div>
+        <label htmlFor="aggreed">Aggreed</label>
+        {/* The check function is another utility function that will help you
+        check out checkboxes quickly without the hassle of defining your own
+        update function for checkboxes, remember that checkboxes have the
+        checked property that will be used instead of the value! */}
+        <input ref={references.aggreed} id="aggreed" type="checkbox" checked={fields.aggreed} onChange={check("aggreed")} />
+        {/* the touchedFields property is here to help you know whether a field
+        has been touched, this is similar to the dirty property, except it is
+        used on a per-field basis */}
+        {touchedFields.aggreed && <small style={{ color: "red" }}>{errors.aggreed}</small>}
+      </div>
+      <div>
+        {/* The select function is here to help you work with selects in the
+        same fashion as the input or check functions, it works solely on select
+        fields so that it will update the value correctly for our elements that
+        needs selection */}
+        <select value={fields.country} onChange={select("country")} ref={references.country}>
+          <option value="fr">France</option>
+          <option value="es">Spain</option>
+          <option value="en">England</option>
+        </select>
+        {touchedFields.country && <small style={{ color: "red" }}>{errors.country}</small>}
+      </div>
+      <div>
+        {/* You can of course have files in your forms as well! You can use the
+        file function for a unique file, or the files function for a list of
+        files to upload to your server, watch out for files because you don't
+        need to provide a value for these fields, only the onChange function is
+        necesssary here */}
+        <input type="file" onChange={file("avatar")} ref={references.avatar} />
+        {touchedFields.avatar && <small style={{ color: "red" }}>{errors.avatar}</small>}
+      </div>
       <button type="submit">
-        Login
-      </button>
-      <button onClick={reset}>
-        Reset
-      </button>
-    </form>
-  );
-}
-```
-
-[Go back to summary](#summary)
-
-### Form status
-
-Fields and the form itself have associated states. You can determine if a field has been interacted with by using the `touched` and `untouched` properties, which are exported from the `useForm` hook. A "touched" field is one that has been altered by the user, meaning its value has changed through one of the following functions: `change`, `select`, `check`, or `store`. 
-
-In a similar manner, you can assess whether the entire form has been touched using the `pristine` and `dirty` properties, also exported from the `useForm` hook. The `pristine` property is `true` when any of the fields have been touched, and conversely, the `dirty` property is `true` when there has been interaction with any part of the form.
-
-```tsx
-type touched = Record<keyof Fields, boolean>;
-type untouched = Record<keyof Fields, boolean>;
-type dirty = boolean;
-type pristine = boolean;
-```
-
-```tsx
-import React from "react";
-import { useForm } from ".";
-
-export const App = () => {
-  const { fields, change, errors, hasError, disabled, touched, untouched, dirty, pristine } = useForm({
-    fields: {
-      email: "",
-      password: ""
-    },
-    validations: {
-      email: value => {
-        if (!value.includes("@")) {
-          return "Should contains an @ symbol";
-        }
-
-        return null;
-      },
-      password: (value, fields) => {
-        if (value === fields.email) {
-          return "Should not equal to the email";
-        }
-
-        return null;
-      }
-    }
-  });
-
-  return (
-    <form>
-      {dirty && (
-        <p>
-          Hint: your login informations have been sent by email.
-        </p>
-      )}
-      <input
-        type="email"
-        value={fields.email}
-        onChange={change("email")} />
-      {touched.email && hasError.email && (
-        <small>
-          {errors.email}
-        </small>
-      )}
-      <input
-        type="password"
-        value={fields.password}
-        onChange={change("password")} />
-      {!untouched.password && hasError.password && (
-        <small>
-          {errors.password}
-        </small>
-      )}
-      <button disabled={pristine || disabled}>
-        Login
+        Submit
       </button>
     </form>
   );
