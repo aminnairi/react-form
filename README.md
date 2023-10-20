@@ -2,6 +2,9 @@
 
 Form utilities for React written in TypeScript
 
+[![version](https://img.shields.io/npm/v/%40aminnairi/react-form)](https://npmjs.com/package/@aminnairi/react-form) [![types](https://img.shields.io/npm/types/%40aminnairi%2Freact-form)](https://github.com/aminnairi/react-form) [![](https://img.shields.io/bundlephobia/minzip/%40aminnairi/react-form)](https://bundlephobia.com/package/@aminnairi/react-form)
+
+
 ## Summary
 
 - [Features](#features)
