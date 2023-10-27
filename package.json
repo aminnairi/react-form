@@ -6,9 +6,7 @@
   "version": "2.0.0",
   "homepage": "https://github.com/aminnairi/react-form",
   "license": "MIT",
-  "module": "dist/index.module.js",
-  "main": "dist/index.common.js",
-  "browser": "dist/index.browser.js",
+  "main": "dist/index.js",
   "bugs": {
     "url": "https://github.com/aminnairi/react-form/issues"
   },
@@ -43,6 +41,7 @@
     "react": "18.2.0"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "25.0.7",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-terser": "0.4.3",
     "@types/react": "18.2.14",
