@@ -3,6 +3,7 @@ import esbuild from "rollup-plugin-esbuild";
 import terser from "@rollup/plugin-terser";
 import remove from "rollup-plugin-delete";
 import nodeResolve from "@rollup/plugin-node-resolve";
+import commonjs from "@rollup/plugin-commonjs";
 
 export default defineConfig({
   input: "src/index.ts",
@@ -12,28 +13,16 @@ export default defineConfig({
     }),
     esbuild(),
     terser(),
-    nodeResolve()
+    nodeResolve(),
+    commonjs()
   ],
   external: [
     "react"
   ],
   output: [
     {
-      file: "dist/index.module.js",
+      file: "dist/index.js",
       format: "esm"
-    },
-    {
-      file: "dist/index.common.js",
-      format: "cjs"
-    },
-    {
-      file: "dist/index.browser.js",
-      format: "iife",
-      name: "@aminnairi/react-form",
-      extend: true,
-      globals: {
-        react: "React"
-      }
     }
   ]
 });
