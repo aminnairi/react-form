@@ -3,7 +3,7 @@
   "name": "@aminnairi/react-form",
   "types": "dist/index.d.ts",
   "description": "Form utilities for React written in TypeScript",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "homepage": "https://github.com/aminnairi/react-form",
   "license": "MIT",
   "main": "dist/index.js",
