@@ -2,6 +2,7 @@
 
 ## Versions
 
+- [`2.0.2`](#202)
 - [`2.0.1`](#201)
 - [`2.0.0`](#200)
 - [`1.1.1`](#111)
@@ -9,6 +10,10 @@
 - [`1.0.1`](#101)
 - [`1.0.0`](#100)
 - [`0.1.0`](#010)
+
+## 2.0.2
+
+- Added module type in the package configuration ([#15](https://github.com/aminnairi/react-form/pull/15))
 
 ## 2.0.1
 
