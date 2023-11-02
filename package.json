@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "sideEffects": false,
   "name": "@aminnairi/react-form",
   "types": "dist/index.d.ts",
