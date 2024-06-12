@@ -39,7 +39,7 @@
     "types": "tsc --project tsconfig.json --declaration --emitDeclarationOnly"
   },
   "peerDependencies": {
-    "react": "18.2.0"
+    "react": ">=16.8.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "25.0.7",
