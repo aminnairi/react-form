@@ -2,6 +2,7 @@
 
 ## Versions
 
+- [`2.0.3`](#203)
 - [`2.0.2`](#202)
 - [`2.0.1`](#201)
 - [`2.0.0`](#200)
@@ -10,6 +11,10 @@
 - [`1.0.1`](#101)
 - [`1.0.0`](#100)
 - [`0.1.0`](#010)
+
+## 2.0.3
+
+- Fixed peer dependencies for this library ([#17](https://github.com/aminnairi/react-form/pull/17))
 
 ## 2.0.2
 
