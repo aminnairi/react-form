@@ -1,0 +1,43 @@
+{
+  "type": "module",
+  "sideEffects": false,
+  "name": "@aminnairi/react-form",
+  "description": "Form utilities for React written in TypeScript",
+  "version": "3.0.0",
+  "homepage": "https://github.com/aminnairi/react-form",
+  "license": "MIT",
+  "main": "index.ts",
+  "bugs": {
+    "url": "https://github.com/aminnairi/react-form/issues"
+  },
+  "author": {
+    "name": "Amin NAIRI",
+    "url": "https://github.com/aminnairi"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aminnairi/react-form.git"
+  },
+  "files": [
+    "index.ts"
+  ],
+  "keywords": [
+    "react",
+    "form",
+    "input",
+    "textarea",
+    "checkbox",
+    "radio",
+    "select",
+    "validation",
+    "error",
+    "hook"
+  ],
+  "peerDependencies": {
+    "react": ">=16.8.0"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "typescript": "5.7.2"
+  }
+}
